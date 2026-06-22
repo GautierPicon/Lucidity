@@ -1,23 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
   <rect width="256" height="256" fill="#339989"/>
  
-  <!-- Anneau orbital : arc du sommet (cap rond) jusqu'au satellite bas-gauche -->
   <path d="M 142.8 44.05 A 85.25 85.25 0 0 0 68.25 188.8"
         fill="none" stroke="#131515" stroke-width="16.5" stroke-linecap="round"/>
  
-  <!-- Anneau orbital : arc du satellite haut-droit jusqu'en bas (cap rond) -->
   <path d="M 187.75 67.2 A 85.25 85.25 0 0 1 113.2 211.95"
-        fill="none" stroke="#131515" stroke-width="16.5" stroke-linecap="round"/>
+        fill="none" stroke="#151315" stroke-width="16.5" stroke-linecap="round"/>
  
-  <!-- Satellite haut-droit (anneau) : disque noir plein + trou vert par-dessus l'arc -->
   <circle cx="187" cy="68" r="25" fill="#131515"/>
   <circle cx="187" cy="68" r="8" fill="#339989"/>
  
-  <!-- Satellite bas-gauche (anneau) : disque noir plein + trou vert par-dessus l'arc -->
   <circle cx="68" cy="187" r="25" fill="#131515"/>
   <circle cx="68" cy="187" r="8" fill="#339989"/>
  
-  <!-- Anneau central (donut) -->
   <circle cx="128" cy="128" r="25.5" fill="none" stroke="#131515" stroke-width="16"/>
 </svg>
  
