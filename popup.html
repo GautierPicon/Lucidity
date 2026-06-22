@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ask Local AI</title>
+  <style>
+    body {
+      width: 380px;
+      height: 520px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    #chat p {
+      margin: 0 0 10px 0;
+    }
+    #composer {
+      display: flex;
+      gap: 4px;
+      padding: 8px;
+    }
+    #question-input {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Ask Local AI</strong>
+    <span id="status-dot">(status: unknown)</span>
+    <button id="settings-toggle" type="button">Settings</button>
+  </header>
+
+  <section id="settings-panel" hidden>
+    <label for="model-input">Ollama model</label><br />
+    <input
+      type="text"
+      id="model-input"
+      value="lfm2.5-thinking:1.2b"
+      spellcheck="false"
+    /><br />
+    <label>
+      <input type="checkbox" id="use-context-toggle" checked />
+      Use page context
+    </label>
+  </section>
+
+  <div id="context-banner" hidden>
+    Context: <span id="context-banner-text"></span>
+  </div>
+
+  <main id="chat"></main>
+
+  <form id="composer">
+    <textarea
+      id="question-input"
+      placeholder="Ask your question…"
+      rows="2"
+      autofocus
+    ></textarea>
+    <button id="send-button" type="submit">Send</button>
+  </form>
+
+  <script src="popup.js"></script>
+</body>
+</html>
