@@ -1,4 +1,4 @@
-<img src="icons/icon.svg" alt="Lucidity Logo" align="left" width="110"/>
+<img src="icons/icon.svg" alt="Lucidity Logo" align="left" width="90"/>
 
 ### `Lucidity`
 
