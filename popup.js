@@ -270,6 +270,15 @@ function describeError(err) {
   return `Error: ${message}`;
 }
 
+function stripThinking(raw) {
+  let visible = raw.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  const openTag = visible.search(/<think>/i);
+  if (openTag !== -1) {
+    visible = visible.slice(0, openTag);
+  }
+  return visible;
+}
+
 async function streamOllamaResponse(model, prompt, bubbleEl) {
   const res = await fetch(OLLAMA_URL, {
     method: "POST",
@@ -289,13 +298,25 @@ async function streamOllamaResponse(model, prompt, bubbleEl) {
     throw error;
   }
 
-  bubbleEl.dataset.kind = "assistant";
-  bubbleEl.textContent = "";
+  bubbleEl.dataset.kind = "loading";
+  bubbleEl.textContent = "…";
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let fullText = "";
+
+  function renderStream() {
+    const visible = stripThinking(fullText).trimStart();
+    if (!visible) {
+      bubbleEl.dataset.kind = "loading";
+      bubbleEl.textContent = "…";
+    } else {
+      bubbleEl.dataset.kind = "assistant";
+      bubbleEl.textContent = visible;
+    }
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
 
   while (true) {
     const { done, value } = await reader.read();
@@ -310,12 +331,13 @@ async function streamOllamaResponse(model, prompt, bubbleEl) {
       const json = JSON.parse(line);
       if (json.response) {
         fullText += json.response;
-        bubbleEl.textContent = fullText;
-        chatEl.scrollTop = chatEl.scrollHeight;
+        renderStream();
       }
       if (json.done) {
+        renderStream();
         return;
       }
     }
   }
+  renderStream();
 }
