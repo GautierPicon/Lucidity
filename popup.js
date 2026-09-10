@@ -254,6 +254,19 @@ function describeError(err) {
   if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
     return "Could not reach Ollama on localhost:11434.\nMake sure Ollama is running (command: ollama serve) and that OLLAMA_ORIGINS allows this extension.";
   }
+  if (err?.status === 403 || message.includes(" 403")) {
+    const extId = globalThis.chrome?.runtime?.id || "<extension-id>";
+    return (
+      "Ollama a refusé la requête (403 : origine bloquée).\n" +
+      "Quitte l'app Ollama (tueur de doublon : pkill), puis relance un seul serveur avec :\n" +
+      `OLLAMA_ORIGINS="chrome-extension://${extId}" ollama serve\n` +
+      "(En dev : OLLAMA_ORIGINS=\"chrome-extension://*\" ollama serve)"
+    );
+  }
+  if (err?.status === 404 || message.includes(" 404")) {
+    const model = modelInput.value.trim() || DEFAULT_MODEL;
+    return `Modèle '${model}' introuvable (404).\nInstalle-le avec : ollama pull ${model}`;
+  }
   return `Error: ${message}`;
 }
 
@@ -270,9 +283,10 @@ async function streamOllamaResponse(model, prompt, bubbleEl) {
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(
-      `Ollama responded ${res.status}. ${body || "Make sure the model '" + model + "' is installed (ollama pull " + model + ")."}`
-    );
+    const error = new Error(`Ollama responded ${res.status}. ${body}`);
+    error.status = res.status;
+    error.body = body;
+    throw error;
   }
 
   bubbleEl.dataset.kind = "assistant";
