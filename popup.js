@@ -12,6 +12,8 @@ const modelInput = document.getElementById("model-input");
 const useContextToggle = document.getElementById("use-context-toggle");
 const contextBanner = document.getElementById("context-banner");
 const contextBannerText = document.getElementById("context-banner-text");
+const summarizeButton = document.getElementById("summarize-button");
+const explainButton = document.getElementById("explain-button");
 
 let pageContext = null;
 let isGenerating = false;
@@ -35,6 +37,7 @@ modelInput.addEventListener("change", () => {
 useContextToggle.addEventListener("change", () => {
   chrome.storage.local.set({ useContext: useContextToggle.checked });
   updateContextBanner();
+  updatePresetButtons();
 });
 
 settingsToggle.addEventListener("click", () => {
@@ -59,6 +62,7 @@ async function fetchPageContext() {
     setStatus("error");
   }
   updateContextBanner();
+  updatePresetButtons();
 }
 
 function updateContextBanner() {
@@ -78,16 +82,9 @@ function updateContextBanner() {
   }
 }
 
-function buildPrompt(question) {
-  if (!useContextToggle.checked || !pageContext) {
-    return question;
-  }
-
+function formatPageContext() {
   const parts = [];
-  parts.push(
-    "You are an assistant answering a question using, when relevant, the web page context provided below. If the context isn't useful for answering, ignore it and answer normally."
-  );
-  parts.push(`\n--- PAGE CONTEXT ---`);
+  parts.push(`--- PAGE CONTEXT ---`);
   parts.push(`Title: ${pageContext.title}`);
   parts.push(`URL: ${pageContext.url}`);
 
@@ -99,10 +96,56 @@ function buildPrompt(question) {
     );
   }
 
-  parts.push(`--- END OF CONTEXT ---\n`);
+  parts.push(`--- END OF CONTEXT ---`);
+  return parts.join("\n");
+}
+
+function hasUsablePageContext() {
+  return Boolean(pageContext && (pageContext.selection || pageContext.content));
+}
+
+function updatePresetButtons() {
+  const enabled = !isGenerating && hasUsablePageContext();
+  summarizeButton.disabled = !enabled;
+  explainButton.disabled = !enabled;
+}
+
+function buildPrompt(question) {
+  if (!useContextToggle.checked || !pageContext) {
+    return question;
+  }
+
+  const parts = [];
+  parts.push(
+    "You are an assistant answering a question using, when relevant, the web page context provided below. If the context isn't useful for answering, ignore it and answer normally."
+  );
+  parts.push(`\n${formatPageContext()}\n`);
   parts.push(`User question: ${question}`);
 
   return parts.join("\n");
+}
+
+function buildSummarizePrompt() {
+  return [
+    "Detect the main language of the page context below and always answer in that same language.",
+    "Summarize the web page for someone who hasn't read it.",
+    "Provide a short summary in 3-5 sentences, followed by a 'Key points' section with exactly 3 bullet points.",
+    "Only use the information from the context. If the selected text is present, focus on it; otherwise summarize the main page content.",
+    "",
+    formatPageContext()
+  ].join("\n");
+}
+
+function buildExplainPrompt() {
+  return [
+    "Detect the main language of the page context below and always answer in that same language.",
+    "Explain the content of this web page to an adult non-expert.",
+    "Use simple everyday language, avoid jargon, and use 1-2 concrete analogies when helpful.",
+    "Keep short paragraphs with a clear structure. Do not assume prior knowledge.",
+    "If the selected text is present, explain it first, then its broader context on the page.",
+    "",
+    formatPageContext()
+  ].join("\n");
 }
 
 function setStatus(state) {
@@ -165,9 +208,45 @@ async function handleSend() {
   }
 }
 
+async function handlePreset(kind) {
+  if (isGenerating) return;
+
+  if (!hasUsablePageContext()) {
+    addBubble(
+      "Ouvre une page web avec du contenu (ou sélectionne du texte) pour utiliser cette action.",
+      "error"
+    );
+    return;
+  }
+
+  const isSummary = kind === "summary";
+  addBubble(
+    isSummary ? "Résume cette page" : "Explique-moi cette page simplement",
+    "user"
+  );
+  setGenerating(true);
+
+  const loadingBubble = addBubble("…", "loading");
+  const model = modelInput.value.trim() || DEFAULT_MODEL;
+  const prompt = isSummary ? buildSummarizePrompt() : buildExplainPrompt();
+
+  try {
+    await streamOllamaResponse(model, prompt, loadingBubble);
+  } catch (err) {
+    loadingBubble.dataset.kind = "error";
+    loadingBubble.textContent = describeError(err);
+  } finally {
+    setGenerating(false);
+  }
+}
+
+summarizeButton.addEventListener("click", () => handlePreset("summary"));
+explainButton.addEventListener("click", () => handlePreset("explain"));
+
 function setGenerating(value) {
   isGenerating = value;
   sendButton.disabled = value;
+  updatePresetButtons();
 }
 
 function describeError(err) {

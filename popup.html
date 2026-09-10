@@ -27,6 +27,14 @@
     #question-input {
       flex: 1;
     }
+    #actions {
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+    }
+    #actions button {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -52,6 +60,15 @@
 
   <div id="context-banner" hidden>
     Context: <span id="context-banner-text"></span>
+  </div>
+
+  <div id="actions">
+    <button id="summarize-button" type="button" disabled>
+      Résumer la page
+    </button>
+    <button id="explain-button" type="button" disabled>
+      Expliquer simplement
+    </button>
   </div>
 
   <main id="chat"></main>
