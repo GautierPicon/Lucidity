@@ -2,72 +2,351 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Ask Local AI</title>
+  <title>Lucidity</title>
   <style>
+    :root {
+      --bg: #1a1d21;
+      --surface: #24282e;
+      --surface-2: #2e333b;
+      --border: #353b44;
+      --accent: #7c6cf0;
+      --accent-hover: #8d7df5;
+      --text: #e8eaed;
+      --text-muted: #9aa0a6;
+      --success: #4caf7d;
+      --error: #e57373;
+      --warning: #e5a653;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       width: 380px;
       height: 520px;
       margin: 0;
       display: flex;
       flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
     }
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px;
-    }
-    #chat p {
-      margin: 0 0 10px 0;
-    }
-    #composer {
+
+    header {
       display: flex;
-      gap: 4px;
-      padding: 8px;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
     }
-    #question-input {
-      flex: 1;
+
+    header img {
+      width: 20px;
+      height: 20px;
     }
+
+    header strong {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    #status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      margin-left: auto;
+    }
+
+    #status-dot.ok {
+      background: var(--success);
+    }
+
+    #status-dot.error {
+      background: var(--error);
+    }
+
+    #status-dot.loading {
+      background: var(--warning);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.35;
+      }
+    }
+
+    #settings-toggle {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 15px;
+      padding: 2px 7px;
+    }
+
+    #settings-toggle:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    #settings-panel {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    #settings-panel label {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    #model-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: monospace;
+      font-size: 12px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+    }
+
+    #model-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .switch {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .switch input {
+      accent-color: var(--accent);
+    }
+
+    #context-banner {
+      margin: 8px 12px 0;
+      padding: 5px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-muted);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     #actions {
       display: flex;
       gap: 8px;
-      padding: 8px;
+      padding: 10px 12px 4px;
     }
+
     #actions button {
       flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 9px 6px;
+      transition: border-color 0.15s, background 0.15s, transform 0.05s;
+    }
+
+    #actions button:hover:not(:disabled) {
+      background: var(--surface-2);
+      border-color: var(--accent);
+    }
+
+    #actions button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    #actions button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    #actions .action-icon {
+      font-size: 14px;
+    }
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #chat p {
+      margin: 0;
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      max-width: 88%;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    #chat p[data-kind="user"] {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    #chat p[data-kind="assistant"] {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+
+    #chat p[data-kind="loading"] {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    #chat p[data-kind="error"] {
+      align-self: flex-start;
+      background: rgba(229, 115, 115, 0.12);
+      border: 1px solid rgba(229, 115, 115, 0.4);
+      color: #f0a8a8;
+      white-space: pre-wrap;
+    }
+
+    .chat__empty {
+      margin: auto;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12.5px;
+    }
+
+    .chat__empty .chat__empty-title {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    #composer {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+
+    #question-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 10px;
+      resize: none;
+    }
+
+    #question-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    #question-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    #send-button {
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+
+    #send-button:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    #send-button:disabled {
+      opacity: 0.4;
+      cursor: default;
     }
   </style>
 </head>
 <body>
   <header>
-    <strong>Ask Local AI</strong>
-    <span id="status-dot">(status: unknown)</span>
-    <button id="settings-toggle" type="button">Settings</button>
+    <img src="icons/icon16.png" alt="" />
+    <strong>Lucidity</strong>
+    <span id="status-dot" title="Status: unknown"></span>
+    <button id="settings-toggle" type="button" title="Settings">⚙</button>
   </header>
 
   <section id="settings-panel" hidden>
-    <label for="model-input">Ollama model</label><br />
+    <label for="model-input">Ollama model</label>
     <input
       type="text"
       id="model-input"
       value="lfm2.5-thinking:1.2b"
       spellcheck="false"
-    /><br />
-    <label>
+    />
+    <label class="switch">
       <input type="checkbox" id="use-context-toggle" checked />
       Use page context
     </label>
   </section>
 
   <div id="context-banner" hidden>
-    Context: <span id="context-banner-text"></span>
+    <span id="context-banner-text"></span>
   </div>
 
   <div id="actions">
     <button id="summarize-button" type="button" disabled>
-      Résumer la page
+      <span class="action-icon">📄</span> Summarize
     </button>
     <button id="explain-button" type="button" disabled>
-      Expliquer simplement
+      <span class="action-icon">💡</span> Explain simply
     </button>
   </div>
 
@@ -76,11 +355,10 @@
   <form id="composer">
     <textarea
       id="question-input"
-      placeholder="Ask your question…"
+      placeholder="Ask about this page…"
       rows="2"
-      autofocus
     ></textarea>
-    <button id="send-button" type="submit">Send</button>
+    <button id="send-button" type="submit" title="Send">↑</button>
   </form>
 
   <script src="popup.js"></script>

@@ -149,13 +149,12 @@ function buildExplainPrompt() {
 }
 
 function setStatus(state) {
-  if (state === "ok") statusDot.textContent = "(status: ok)";
-  if (state === "error") statusDot.textContent = "(status: error)";
-  if (state === "loading") statusDot.textContent = "(status: loading…)";
+  statusDot.className = state === "ok" || state === "error" || state === "loading" ? state : "";
+  statusDot.title = `Status: ${state}`;
 }
 
 function showEmptyState() {
-  chatEl.innerHTML = `<div class="chat__empty">Ask a question.<br/>The active page's context will be used if available.</div>`;
+  chatEl.innerHTML = `<div class="chat__empty"><span class="chat__empty-title">Ask anything about this page</span>Summarize it, simplify it, or ask a question below.</div>`;
 }
 
 function clearEmptyState() {
@@ -213,7 +212,7 @@ async function handlePreset(kind) {
 
   if (!hasUsablePageContext()) {
     addBubble(
-      "Ouvre une page web avec du contenu (ou sélectionne du texte) pour utiliser cette action.",
+      "Open a page with some content (or select text) to use this action.",
       "error"
     );
     return;
@@ -221,7 +220,7 @@ async function handlePreset(kind) {
 
   const isSummary = kind === "summary";
   addBubble(
-    isSummary ? "Résume cette page" : "Explique-moi cette page simplement",
+    isSummary ? "Summarize this page" : "Explain this page simply",
     "user"
   );
   setGenerating(true);
@@ -257,15 +256,15 @@ function describeError(err) {
   if (err?.status === 403 || message.includes(" 403")) {
     const extId = globalThis.chrome?.runtime?.id || "<extension-id>";
     return (
-      "Ollama a refusé la requête (403 : origine bloquée).\n" +
-      "Quitte l'app Ollama (tueur de doublon : pkill), puis relance un seul serveur avec :\n" +
+      "Ollama refused the request (403: blocked origin).\n" +
+      "Quit the Ollama app to avoid duplicates, then run a single server with:\n" +
       `OLLAMA_ORIGINS="chrome-extension://${extId}" ollama serve\n` +
-      "(En dev : OLLAMA_ORIGINS=\"chrome-extension://*\" ollama serve)"
+      "(For dev: OLLAMA_ORIGINS=\"chrome-extension://*\" ollama serve)"
     );
   }
   if (err?.status === 404 || message.includes(" 404")) {
     const model = modelInput.value.trim() || DEFAULT_MODEL;
-    return `Modèle '${model}' introuvable (404).\nInstalle-le avec : ollama pull ${model}`;
+    return `Model '${model}' not found (404).\nInstall it with: ollama pull ${model}`;
   }
   return `Error: ${message}`;
 }
