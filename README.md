@@ -1,3 +1,5 @@
+![Lucidity](.github/heroReadme.png)
+
 <img src="icons/icon.svg" alt="Lucidity Logo" align="left" width="90"/>
 
 ### `Lucidity`
